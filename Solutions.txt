@@ -1,7 +1,7 @@
-1. Count the number of Movies vs TV Shows?
-	SELECT TYPE, COUNT(*)
+### 1. Count the number of Movies vs TV Shows?
+	```SELECT TYPE, COUNT(*)
 	FROM NETFLIX_TITLES
-	GROUP BY TYPE;
+	GROUP BY TYPE;```
 
 2. Find the most common rating for movies and TV shows?
 WITH CTE AS(
