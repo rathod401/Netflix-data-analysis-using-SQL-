@@ -1,0 +1,129 @@
+1. Count the number of Movies vs TV Shows?
+	SELECT TYPE, COUNT(*)
+	FROM NETFLIX_TITLES
+	GROUP BY TYPE;
+
+2. Find the most common rating for movies and TV shows?
+WITH CTE AS(
+	SELECT RATING, TYPE, 
+	COUNT(*) as COMMON_RATING,
+	ROW_NUMBER() OVER (PARTITION BY TYPE ORDER BY COUNT(*) DESC) AS RN
+	FROM NETFLIX_TITLES
+	GROUP BY TYPE,RATING
+)
+SELECT RATING, TYPE, COMMON_RATING
+FROM CTE
+WHERE RN = 1
+
+3. List all movies released in a specific year (e.g., 2020)?
+SELECT TITLE
+FROM NETFLIX_TITLES
+WHERE RELEASE_YEAR = 2020 AND TYPE = 'Movie'
+
+4. Find the top 5 countries with the most content on Netflix?
+SELECT
+	TRIM(UNNEST(STRING_TO_ARRAY(COUNTRY, ','))) AS INDIVIDUAL_COUNTRIES,
+	COUNT(COUNTRY) AS TOTAL_CONTENTS
+FROM NETFLIX_TITLES
+GROUP BY INDIVIDUAL_COUNTRIES
+ORDER BY TOTAL_CONTENTS DESC
+LIMIT 5;
+
+5. Identify the longest movie?
+
+SELECT *
+FROM NETFLIX_TITLES
+WHERE
+	TYPE = 'Movie'
+	AND DURATION = (SELECT MAX(DURATION) FROM NETFLIX_TITLES)
+
+6. Find content added in the last 5 years?
+
+SELECT * FROM NETFLIX_TITLES
+WHERE DATE_ADDED >= (CURRENT_DATE - INTERVAL '5 years')
+ORDER BY DATE_ADDED DESC;
+
+7. Find all the movies/TV shows by director 'Rajiv Chilaka'?
+
+SELECT *
+FROM NETFLIX_TITLES
+WHERE DIRECTOR ILIKE '%Rajiv Chilaka%'
+
+8. List all TV shows with more than 5 seasons?
+
+SELECT *
+FROM NETFLIX_TITLES
+WHERE TYPE = 'TV Show'
+		AND 
+		SPLIT_PART(DURATION,' ',1)::NUMERIC > 5
+
+9. Count the number of content items in each genre?
+WITH CountryList AS (
+    SELECT 
+        UNNEST(STRING_TO_ARRAY(LISTED_IN, ',')) AS INDIVIDUAL_COUNTRY
+    FROM NETFLIX_TITLES
+)
+SELECT 
+     INDIVIDUAL_COUNTRY,
+    COUNT(*) AS TOTAL_CONTENTS
+FROM  CountryList
+GROUP BY INDIVIDUAL_COUNTRY
+ORDER BY TOTAL_CONTENTS DESC;
+
+10.Find each year and the average numbers of content release in India on netflix. return top 5 year with highest avg content release?
+
+SELECT EXTRACT(YEAR FROM DATE_ADDED )AS RELEASE_YEARS,
+	COUNT(*) AS TOTAL_CONTENTS,
+	ROUND((COUNT(*) * 1.0) /( SELECT COUNT(*) FROM NETFLIX_TITLES WHERE COUNTRY LIKE '%India%')*100,2)
+FROM NETFLIX_TITLES 
+WHERE COUNTRY LIKE '%India%'
+GROUP BY RELEASE_YEARS
+ORDER BY TOTAL_CONTENTS DESC
+
+11. List all movies that are documentaries?
+
+SELECT count(*)
+FROM NETFLIX_TITLES
+WHERE type = 'Movie' and listed_in ILIKE '%Documentaries%'
+
+
+12. Find all content without a director?
+
+SELECT * 
+FROM NETFLIX_TITLES
+WHERE director IS NULL
+
+13. Find how many movies actor 'Salman Khan' appeared in last 10 years?
+
+SELECT * 
+FROM NETFLIX_TITLES
+WHERE release_year > EXTRACT(YEAR FROM CURRENT_DATE)-10
+AND CASTS ILIKE '%SALMAN KHAN%'
+
+
+14. Find the top 10 actors who have appeared in the highest number of movies produced in India?
+SELECT
+	COUNT(*) AS COUNTS,
+	TRIM(UNNEST(STRING_TO_ARRAY(CASTS, ','))) AS ACTORS
+FROM NETFLIX_TITLES
+WHERE COUNTRY ILIKE '%India%'
+GROUP BY ACTORS
+ORDER BY COUNTS DESC
+LIMIT 10
+
+15. Categorize the content based on the presence of the keywords 'kill' and 'violence' in the description field. Label content containing these keywords as 'Bad' and all other  content as 'Good'. Count how many items fall into each category.?
+
+SELECT CATEGORY, COUNT(CATEGORY)
+FROM
+	(SELECT *,CASE WHEN DESCRIPTION ILIKE '%kill%'
+		  OR DESCRIPTION ILIKE '%violence%'
+		  THEN 'Bad_content' ELSE 'Good_content' END AS CATEGORY
+	 FROM NETFLIX_TITLES
+	)
+GROUP BY CATEGORY
+
+
+
+
+
+
